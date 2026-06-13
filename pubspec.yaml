@@ -4,9 +4,9 @@ description: >-
   web. Numeric / QWERTY / symbols, English + Hindi + Arabic (RTL) out of the
   box, bring-your-own layouts, dark theme, and zero dependencies beyond Flutter.
 version: 0.1.0
-repository: https://github.com/nf-labs/polyboard
+repository: https://github.com/nf-labs-com/polyboard
 homepage: https://nf-labs.com
-issue_tracker: https://github.com/nf-labs/polyboard/issues
+issue_tracker: https://github.com/nf-labs-com/polyboard/issues
 
 topics:
   - keyboard
