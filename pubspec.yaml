@@ -1,0 +1,40 @@
+name: polyboard
+description: >-
+  A multilingual, draggable on-screen keyboard for Flutter desktop, touch and
+  web. Numeric / QWERTY / symbols, English + Hindi + Arabic (RTL) out of the
+  box, bring-your-own layouts, dark theme, and zero dependencies beyond Flutter.
+version: 0.1.0
+repository: https://github.com/nf-labs/polyboard
+homepage: https://nf-labs.com
+issue_tracker: https://github.com/nf-labs/polyboard/issues
+
+topics:
+  - keyboard
+  - onscreen-keyboard
+  - virtual-keyboard
+  - desktop
+  - touch
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  assets:
+    - assets/fonts/
+  fonts:
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-Regular.ttf
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic-Regular.ttf
