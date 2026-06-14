@@ -31,4 +31,7 @@ enum PolyboardAction {
   symbols,
   language,
   hide,
+  caretLeft,
+  caretRight,
+  emoji,
 }

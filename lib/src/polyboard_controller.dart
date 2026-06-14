@@ -30,6 +30,13 @@ typedef PolyboardLogger = void Function(String message);
 const String _kModeKey = 'polyboard.mode';
 const String _kLangKey = 'polyboard.lang';
 const String _kAlignTopKey = 'polyboard.align_top';
+const String _kHeightScaleKey = 'polyboard.height_scale';
+const String _kFloatingKey = 'polyboard.floating';
+const String _kFloatXKey = 'polyboard.float_x';
+const String _kFloatYKey = 'polyboard.float_y';
+
+const double _kMinHeightScale = 0.7;
+const double _kMaxHeightScale = 1.5;
 
 /// The OS-independent on-screen keyboard engine. A plain [ChangeNotifier], so
 /// any state-management layer can host it (Riverpod: `Provider((ref) =>
@@ -46,6 +53,7 @@ class PolyboardController extends ChangeNotifier {
     List<KbLayout> layouts = kPolyboardDefaultLayouts,
     PolyboardMode defaultMode = PolyboardMode.auto,
     this.haptics = true,
+    this.keyPreview = true,
     this.onKey,
     this.onVisibilityChanged,
     this.onLanguageChanged,
@@ -59,6 +67,12 @@ class PolyboardController extends ChangeNotifier {
     _mode = _readMode(defaultMode);
     _langCode = _storage.getString(_kLangKey) ?? this.layouts.first.code;
     _alignTop = _storage.getBool(_kAlignTopKey) ?? false;
+    _heightScale =
+        double.tryParse(_storage.getString(_kHeightScaleKey) ?? '') ?? 1.0;
+    _floating = _storage.getBool(_kFloatingKey) ?? false;
+    final fx = double.tryParse(_storage.getString(_kFloatXKey) ?? '');
+    final fy = double.tryParse(_storage.getString(_kFloatYKey) ?? '');
+    _floatOffset = (fx != null && fy != null) ? Offset(fx, fy) : null;
   }
 
   final PolyboardStorage _storage;
@@ -66,6 +80,9 @@ class PolyboardController extends ChangeNotifier {
   final List<KbLayout> layouts;
   final Map<String, PolyboardImeEngine> imeEngines;
   final bool haptics;
+
+  /// Show an enlarged-character popup above a key while it's pressed.
+  final bool keyPreview;
 
   /// Fires on every key press (the "raw key listener").
   final void Function(PolyboardKey key)? onKey;
@@ -77,6 +94,9 @@ class PolyboardController extends ChangeNotifier {
   late PolyboardMode _mode;
   late String _langCode;
   late bool _alignTop;
+  late double _heightScale;
+  late bool _floating;
+  Offset? _floatOffset;
   bool _lastPointerTouch = false;
   double _dragDy = 0;
   bool _lastVisible = false;
@@ -104,6 +124,22 @@ class PolyboardController extends ChangeNotifier {
   KbLayout get language => kbLayoutByCode(_langCode, layouts);
   bool get alignTop => _alignTop;
   double get dragDy => _dragDy;
+
+  /// Height multiplier (0.7–1.5) applied to the theme's keyboard height.
+  double get heightScale => _heightScale;
+
+  /// Effective keyboard height after the resize scale.
+  double get keyboardHeight => theme.keyboardHeight * _heightScale;
+
+  /// True when the keyboard is a free-floating panel (vs docked full-width).
+  bool get floating => _floating;
+
+  /// Top-left position when [floating]; null until first placed.
+  Offset? get floatOffset => _floatOffset;
+
+  /// Width of the floating panel for a given screen width.
+  static double floatingWidthFor(double screenWidth) =>
+      screenWidth < 600 ? screenWidth - 24 : 560;
 
   /// True when the keyboard should be on screen.
   bool get visible =>
@@ -207,6 +243,65 @@ class PolyboardController extends ChangeNotifier {
       _storage.setBool(_kAlignTopKey, newAlignTop);
     }
     notifyListeners();
+  }
+
+  // ── Resize ──────────────────────────────────────────────────────────────
+
+  /// Set the height multiplier (clamped to 0.7–1.5) and persist it.
+  void setHeightScale(double scale) {
+    final s = scale.clamp(_kMinHeightScale, _kMaxHeightScale);
+    if (s == _heightScale) return;
+    _heightScale = s;
+    _storage.setString(_kHeightScaleKey, s.toString());
+    notifyListeners();
+  }
+
+  /// Step the height by [delta] (e.g. ±0.1) — used by the +/- size keys.
+  void nudgeHeight(double delta) => setHeightScale(_heightScale + delta);
+
+  // ── Free-float positioning ──────────────────────────────────────────────
+
+  /// Toggle between docked (full-width, top/bottom) and floating (a movable
+  /// panel). On switching to floating the panel starts unplaced (centred by
+  /// the host until the first drag).
+  void toggleFloating() {
+    _floating = !_floating;
+    _storage.setBool(_kFloatingKey, _floating);
+    notifyListeners();
+  }
+
+  /// Move the floating panel by [delta] (called during a handle drag). Falls
+  /// back to [start] for the first placement.
+  void floatMove(Offset delta, {Offset? start}) {
+    _floatOffset = (_floatOffset ?? start ?? Offset.zero) + delta;
+    notifyListeners();
+  }
+
+  /// Clamp the floating panel inside [bounds] and persist its position.
+  void floatEnd(Rect bounds) {
+    final o = _floatOffset;
+    if (o == null) return;
+    _floatOffset = Offset(
+      o.dx.clamp(bounds.left, bounds.right),
+      o.dy.clamp(bounds.top, bounds.bottom),
+    );
+    _storage.setString(_kFloatXKey, _floatOffset!.dx.toString());
+    _storage.setString(_kFloatYKey, _floatOffset!.dy.toString());
+    notifyListeners();
+  }
+
+  // ── Caret movement ──────────────────────────────────────────────────────
+
+  /// Move the caret in the bound field by [delta] characters (negative = left).
+  void moveCaret(int delta) {
+    onKey?.call(ActionKey(
+        delta < 0 ? PolyboardAction.caretLeft : PolyboardAction.caretRight));
+    final c = _controller;
+    if (c == null) return;
+    final sel = c.value.selection;
+    final base = sel.isValid ? sel.baseOffset : c.text.length;
+    final next = (base + delta).clamp(0, c.text.length);
+    c.selection = TextSelection.collapsed(offset: next);
   }
 
   // ── Editing operations (mutate the active controller at the caret) ───────

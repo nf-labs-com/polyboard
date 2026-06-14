@@ -1,3 +1,14 @@
+## 0.2.0
+
+- **Key-preview popups** — an enlarged character floats above each key while
+  pressed (toggle with `keyPreview`).
+- **Caret-movement keys** — ◀ ▶ in the top bar move the cursor in the field
+  (`moveCaret`).
+- **Emoji panel** — a categorized emoji grid (toggle in the top bar).
+- **Resize** — +/− keys scale the keyboard height (0.7×–1.5×, persisted).
+- **Free-float positioning** — toggle between docked (full-width, top/bottom)
+  and a draggable floating panel placed anywhere; position persisted.
+
 ## 0.1.0
 
 Initial release.

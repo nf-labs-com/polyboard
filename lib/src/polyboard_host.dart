@@ -59,6 +59,14 @@ class _PolyboardState extends State<Polyboard> {
         animation: widget.controller,
         builder: (context, _) {
           final kb = widget.controller;
+          // Focus-safe wrapper shared by docked + floating placement.
+          final keyboard = TextFieldTapRegion(
+            child: Focus(
+              canRequestFocus: false,
+              descendantsAreFocusable: false,
+              child: PolyboardKeyboard(controller: kb),
+            ),
+          );
           return Stack(
             children: [
               Positioned.fill(
@@ -70,28 +78,42 @@ class _PolyboardState extends State<Polyboard> {
                 ),
               ),
               if (kb.visible)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: kb.alignTop ? 0 : null,
-                  bottom: kb.alignTop ? null : 0,
-                  child: Transform.translate(
-                    offset: Offset(0, kb.dragDy),
-                    child: TextFieldTapRegion(
-                      child: Focus(
-                        canRequestFocus: false,
-                        descendantsAreFocusable: false,
-                        child: PolyboardKeyboard(controller: kb),
-                      ),
+                if (kb.floating)
+                  _floating(context, kb, keyboard)
+                else
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: kb.alignTop ? 0 : null,
+                    bottom: kb.alignTop ? null : 0,
+                    child: Transform.translate(
+                      offset: Offset(0, kb.dragDy),
+                      child: keyboard,
                     ),
                   ),
-                ),
             ],
           );
         },
       ),
     );
   }
+}
+
+Widget _floating(
+    BuildContext context, PolyboardController kb, Widget keyboard) {
+  final size = MediaQuery.of(context).size;
+  final w = PolyboardController.floatingWidthFor(size.width);
+  final maxX = (size.width - w).clamp(0.0, double.infinity);
+  final maxY = (size.height - kb.keyboardHeight).clamp(0.0, double.infinity);
+  // Default: centred horizontally, just above the bottom.
+  final initial = Offset((size.width - w) / 2, maxY - 40);
+  final o = kb.floatOffset ?? initial;
+  return Positioned(
+    left: o.dx.clamp(0.0, maxX),
+    top: o.dy.clamp(0.0, maxY),
+    width: w,
+    child: keyboard,
+  );
 }
 
 class _PolyboardScope extends InheritedWidget {

@@ -8,8 +8,9 @@ keyboard.
 - 🌍 **English · हिन्दी · العربية (RTL) · Русский** out of the box — and any
   non-CJK script via a few lines of layout data. Bundled Noto fonts so
   Devanagari/Arabic render everywhere.
-- 🖱️ **Drag** the handle to dock the keyboard to the top or bottom; remembered
-  per device.
+- 🖱️ **Drag** the handle to dock top/bottom, or switch to a **free-floating**
+  panel you can move anywhere; **resize** with +/−. All remembered per device.
+- 😀 **Emoji panel**, **key-preview popups**, and **caret-movement** keys.
 - 🎯 **Focus-safe** — tapping a key never dismisses the field (the usual
   `onTapOutside` trap is handled for you).
 - 🔌 **Zero dependencies beyond Flutter.** Pluggable storage, theme, logger and
@@ -146,8 +147,8 @@ class PrefsStorage implements PolyboardStorage {
 ## Roadmap
 
 Long-press accents (unlocks Portuguese/Spanish/French/German), Thai (4-row
-Kedmanee), key-preview popups, caret-movement keys, emoji panel, resizable /
-free-float positioning, and the CJK IME engine.
+Kedmanee), suggestions strip, and the CJK IME engine (the hook is already in
+place via `PolyboardImeEngine`).
 
 ## License
 

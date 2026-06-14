@@ -51,4 +51,32 @@ void main() {
     expect(keys.whereType<TextKey>().single.text, 'x');
     expect(keys.whereType<ActionKey>().single.action, PolyboardAction.backspace);
   });
+
+  test('moveCaret clamps within the text', () {
+    final kb = PolyboardController();
+    final tec = TextEditingController(text: 'abc');
+    kb.attach(tec);
+    tec.selection = const TextSelection.collapsed(offset: 3);
+    kb.moveCaret(-1);
+    expect(tec.selection.baseOffset, 2);
+    kb.moveCaret(-5);
+    expect(tec.selection.baseOffset, 0);
+    kb.moveCaret(10);
+    expect(tec.selection.baseOffset, 3);
+  });
+
+  test('height scale clamps to 0.7..1.5', () {
+    final kb = PolyboardController();
+    kb.setHeightScale(5);
+    expect(kb.heightScale, lessThanOrEqualTo(1.5));
+    kb.setHeightScale(0.1);
+    expect(kb.heightScale, greaterThanOrEqualTo(0.7));
+  });
+
+  test('floating toggles', () {
+    final kb = PolyboardController();
+    expect(kb.floating, isFalse);
+    kb.toggleFloating();
+    expect(kb.floating, isTrue);
+  });
 }
